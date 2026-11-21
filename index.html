@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yashasri’s Treasure Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Emilys+Candy&family=Sniglet:wght@400;800&display=swap">
+<style>
+:root{--pink:#ff9ccf;--red:#e0245e;--ink:#3a1020;--paper:#fff0f7;--mint:#c9efb0}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:"Sniglet","Comic Sans MS",sans-serif;color:var(--ink);background:#ffd3e8;padding:14px 12px 40px;display:flex;justify-content:center}
+#app{width:100%;max-width:440px}
+h1,h2{font-family:"Emilys Candy","Sniglet",cursive;font-weight:400;margin:0 0 8px}
+h1{color:var(--red);font-size:1.9rem;text-align:center}
+h2{font-size:1.5rem}
+p{margin:0 0 10px;font-size:1.05rem;line-height:1.45;white-space:pre-line}
+.card{background:var(--paper);border:4px solid var(--ink);border-radius:8px;box-shadow:6px 6px 0 var(--ink);padding:12px;margin-bottom:16px}
+.top{display:flex;gap:12px;align-items:center;margin-top:10px}
+#peek{width:84px;height:84px;flex:none;border:3px solid var(--ink);background:#fff;overflow:hidden;border-radius:4px;display:flex;align-items:center;justify-content:center;background:#fff url(assets/s12.png) center/80% no-repeat}
+#peek img{width:100%;height:100%;object-fit:cover;filter:blur(var(--b,30px));transition:filter 1s}
+.bar{height:14px;border:3px solid var(--ink);border-radius:9px;background:#fff;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;width:0;background:var(--red);transition:width .8s}
+#map{position:relative;aspect-ratio:360/640;background:linear-gradient(#fde2ef,#d9f2c4);border:4px solid var(--ink);border-radius:8px;box-shadow:6px 6px 0 var(--ink);overflow:hidden;margin-bottom:16px}
+#map svg{position:absolute;inset:0;width:100%;height:100%}
+.deco{position:absolute;width:50px;pointer-events:none}
+.node img{width:82%;height:82%;object-fit:contain;pointer-events:none}
+.sp.hero{width:240px;height:225px}
+.life{width:26px;height:26px;margin:0 2px;vertical-align:middle}.life.off{opacity:.25;filter:grayscale(1)}
+.cf{width:100%;height:100%;object-fit:contain;pointer-events:none}
+.node{position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:3px solid var(--ink);background:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:2px 2px 0 var(--ink);color:var(--ink)}
+.node.locked{opacity:.55;filter:grayscale(1)}
+.node.done{background:var(--mint)}
+.node.active{background:var(--pink);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{transform:scale(1.18)}}
+#snoopy{position:absolute;width:80px;height:80px;margin:-78px 0 0 -40px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3}
+#snoopy.walk{animation:hop .35s infinite}
+@keyframes hop{50%{transform:translateY(-8px)}}
+#snoopy img,.sp img{max-width:100%;max-height:100%}
+.sp{width:130px;height:130px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:76px}
+#status{text-align:center;font-size:1.05rem;min-height:3.2em;display:flex;align-items:center;justify-content:center}
+ol{margin:0;padding-left:22px}li{margin:4px 0;line-height:1.4}
+button{font:inherit;font-weight:800;font-size:1.05rem;padding:10px 18px;border:3px solid var(--ink);border-radius:10px;background:var(--red);color:#fff;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+button.alt{background:var(--pink);color:var(--ink)}
+button.link{background:none;border:0;box-shadow:none;color:var(--ink);text-decoration:underline;font-weight:400}
+button.node{padding:0;font-size:24px;background:#fff;color:var(--ink)}
+:focus-visible{outline:4px solid #2a5bd7;outline-offset:2px}
+#modal{position:fixed;inset:0;background:rgba(58,16,32,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:20}
+#modal.open{display:flex}
+#box{width:100%;max-width:420px;max-height:92vh;overflow:auto;position:relative;text-align:center;margin:0}
+button.x{position:absolute;top:6px;right:8px;padding:0 9px;font-size:1.3rem;background:#fff;color:var(--ink);box-shadow:none}
+.bubble{background:#fff;border:3px solid var(--ink);border-radius:20px;padding:12px 14px;margin:6px 0 14px;text-align:left}
+.bubble p{margin:0}
+form{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+input{flex:1 1 180px;min-width:0;font:inherit;font-size:1.05rem;padding:10px;border:3px solid var(--ink);border-radius:10px}
+.fb{min-height:1.6em;margin:10px 0;font-weight:800;color:var(--red)}
+.hint{background:#ffe0ef;border:3px dashed var(--ink);border-radius:10px;padding:8px 10px;text-align:left}
+.ttt,.mem{display:grid;gap:6px;justify-content:center;margin:8px 0}
+.ttt{grid-template-columns:repeat(3,76px)}.mem{grid-template-columns:repeat(4,64px)}
+.cell{width:100%;aspect-ratio:1;padding:0;font-size:32px;background:#fff;color:var(--ink);box-shadow:none}
+.cell.ok{background:var(--mint)}
+button.big{font-size:64px;padding:10px 24px;background:#fff;margin:8px 0}
+.hw{font-size:1.7rem;letter-spacing:2px;margin:10px 0;word-break:break-all}
+.kb{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+button.key{width:34px;padding:6px 0;font-size:.95rem;background:#fff;color:var(--ink);box-shadow:none;border-width:2px}
+button.key:disabled{opacity:.3}
+.wd{display:grid;gap:5px;justify-content:center;margin:8px 0}
+.wc{width:46px;height:46px;border:3px solid var(--ink);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:800;background:#fff}
+.wc.g{background:#8fd36b}.wc.y{background:#ffd966}.wc.n{background:#cfc3c9}
+.pz{display:grid;gap:3px;width:min(100%,320px);aspect-ratio:1;margin:8px auto;background:var(--ink);padding:3px;border-radius:6px}
+button.pt{padding:0;border:0;border-radius:3px;box-shadow:none;background-color:var(--pink);background-repeat:no-repeat;position:relative;cursor:pointer;min-width:0}
+button.pt.blank{background:#f7e3ec;cursor:default}
+button.pt span{position:absolute;top:2px;left:3px;background:rgba(58,16,32,.6);color:#fff;font-size:.68rem;padding:0 5px;border-radius:8px;line-height:1.35}
+.ref{width:140px;aspect-ratio:1;margin:6px auto 10px;border:3px solid var(--ink);border-radius:6px;background-size:cover}
+.ref[hidden],button[hidden]{display:none}
+.prize{width:100%;border:4px solid var(--ink);border-radius:6px;margin:8px 0}
+.pop{animation:pop .5s}@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.conf{position:fixed;top:-60px;width:46px;pointer-events:none;animation:fall linear forwards;z-index:30}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+@media (prefers-reduced-motion:reduce){.node.active,#snoopy.walk,.pop{animation:none}.conf{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1 id="title"></h1>
+  <div class="top card">
+    <div id="peek"></div>
+    <div style="flex:1"><div id="pct" style="font-weight:800"></div><div class="bar"><i id="fill"></i></div>
+    <div style="font-size:.9rem;margin-top:6px">Your treasure photo gets clearer with every clue!</div></div>
+  </div>
+  <div id="map"><svg viewBox="0 0 360 640" preserveAspectRatio="none" aria-hidden="true"><path id="path" d="M 60 60 C 330 40 340 200 180 215 C 20 230 20 385 180 400 C 340 415 330 570 150 595" fill="none" stroke="#3a1020" stroke-width="5" stroke-dasharray="3 12" stroke-linecap="round"/></svg><div id="snoopy"></div></div>
+  <div id="status" class="card" aria-live="polite"></div>
+  <div class="card"><h2>Clue book</h2><ol id="clues"></ol></div>
+</div>
+<div id="modal"><div id="box" class="card"></div></div>
+<script>
+/* ============ EDIT THIS PART ONLY ============ */
+const CONFIG = {
+  title: "Yashasri’s Treasure Map",
+  intro: "Happy birthday, Yashasri!\nSnoopy is on a mission to find your treasure.\nHelp him at every stop and collect the clues.",
+  finalFound: "Snoopy found the big X! Tap the treasure.",
+  // Transparent PNGs in assets/. If missing, the emoji shows instead.
+  sprites: {
+    snoopy: { src: "assets/snoopy.png", fallback: "" },   // walks the map
+    hero:   { src: "assets/hero.png",   fallback: "" }    // her picture on the intro screen
+  },
+  icons: { home: "assets/s4.png", treasure: "assets/s12.png" },
+  life: "assets/s13.png",                                    // hangman lives
+  confetti: ["assets/s13.png", "assets/s3.png", "assets/s2.png", "assets/s11.png", "assets/s12.png", "assets/s16.png"],
+  wrong: [
+    "Good grief! Not quite.",
+    "Noice try. Not it.",
+    "Is this answer a situationship? Because it’s not working out.",
+    "Cool cool cool cool cool. No doubt no doubt. But no.",
+    "Girl is under control. The answer is not. Try again."
+  ],
+  // type: riddle | hangman | wordle | slide | memory | task
+  stops: [
+    { icon: "assets/s14.png", name: "Dig site", type: "riddle",
+      found: "Snoopy found a spot to dig! Tap the glowing spot.",
+      text: "He’s a detective who says “noice” and never takes a case seriously.\nWho is he?",
+      answers: ["jake", "jake peralta", "peralta"], hint: "Nine-Nine!",
+      clue: "Clue 1: Your treasure is a picture, and you’re in it." },
+    { icon: "assets/s3.png", name: "Chalkboard", type: "hangman",
+      found: "Snoopy found a chalkboard with blank letters! Tap to play.",
+      text: "Guess the word before you run out of lives.\nHint: Snoopy’s tiny yellow best friend.",
+      word: "woodstock", lives: 6,
+      clue: "Clue 2: Someone spent way too long editing it." },
+    { icon: "assets/s10.png", name: "Puzzle", type: "slide",
+      found: "Snoopy found a scrambled picture in the dirt! Tap to fix it.",
+      text: "Slide the tiles to put the picture back together.",
+      image: "assets/puzzle.jpg", size: 3, skipAfter: 180,
+      clue: "Clue 3: It’s pink. Obviously." },
+    { icon: "assets/s15.png", name: "Card pile", type: "memory",
+      found: "Snoopy found a pile of face-down cards! Tap to flip.",
+      text: "Match all the pairs.", cards: ["assets/s0.png", "assets/s1.png", "assets/s2.png", "assets/s11.png", "assets/s13.png", "assets/s16.png"],
+      clue: "Clue 4: It has a little bit of Snoopy in it." },
+    { icon: "assets/s8.png", name: "Suspicious note", type: "riddle",
+      found: "Snoopy found a suspicious note! Tap to read it.",
+      text: "Once upon a time you told me something comes in flavours, and I believed you.\nWhat was it?",
+      answers: ["pads", "pad", "sanitary pads", "sanitary pad", "women pads"], hint: "Not a snack. Just a very convincing lie.",
+      clue: "Clue 5: You’re going to want to screenshot it." },
+    { icon: "assets/s7.png", name: "Secret word", type: "wordle",
+      found: "Snoopy found a mysterious 5-letter word puzzle! Tap to crack it.",
+      text: "Guess the 5-letter word in 6 tries.\nGreen = right spot, yellow = wrong spot, grey = not in the word.",
+      hint: "Hint: pink raspberry kind of night.", word: "vodka", tries: 6,
+      clue: "Clue 6: It’s waiting at the X. Go get it!" }
+  ],
+  treasure: {
+    image: "assets/treasure.jpg",     // your picture edit goes here
+    title: "You found the treasure!",
+    message: "Happy birthday, Yashasri!\nLove, Ruhaan\n(Press and hold the picture to save it.)"
+  }
+};
+/* ============ END OF EDIT ZONE ============ */
+
+const $ = s => document.querySelector(s);
+const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+const S = CONFIG.stops, N = S.length;
+let st = { started: false, cleared: 0 };
+try { const o = JSON.parse(localStorage.getItem("snoopyMapV1")); if (o && o.cleared >= 0 && o.cleared <= N) st = { started: !!o.started, cleared: o.cleared }; } catch (e) {}
+const save = () => { try { localStorage.setItem("snoopyMapV1", JSON.stringify(st)); } catch (e) {} };
+
+function sprite(def, cls) {
+  const w = el("div", cls || "sp", def.fallback); w.setAttribute("aria-hidden", "true");
+  const i = new Image(); i.alt = ""; i.onload = () => { w.textContent = ""; w.appendChild(i); }; i.src = def.src;
+  return w;
+}
+
+/* ---- map ---- */
+const P = $("#path"), L = P.getTotalLength(), M = $("#map"), sn = $("#snoopy");
+const pt = i => P.getPointAtLength(L * (0.03 + 0.94 * i / (N + 1)));
+const place = (e, p) => { e.style.left = p.x / 3.6 + "%"; e.style.top = p.y / 6.4 + "%"; };
+[["assets/s1.png", 2, 17], ["assets/s16.png", 2, 62], ["assets/s0.png", 68, 2], ["assets/s5.png", 38, 88]].forEach(d => {
+  const s = el("img", "deco"); s.src = d[0]; s.alt = ""; s.style.left = d[1] + "%"; s.style.top = d[2] + "%"; M.appendChild(s);
+});
+const nodes = [];
+for (let i = 0; i <= N + 1; i++) {
+  const b = el("button", "node"); b.type = "button"; const ic = el("img"); ic.alt = ""; ic.src = i === 0 ? CONFIG.icons.home : i === N + 1 ? CONFIG.icons.treasure : S[i - 1].icon; b.appendChild(ic);
+  place(b, pt(i)); b.onclick = () => tapNode(i); M.appendChild(b); nodes.push(b);
+}
+sn.appendChild(sprite(CONFIG.sprites.snoopy, "sp")); sn.firstChild.style.cssText = "width:80px;height:80px;margin:0";
+let at = 0, walking = false;
+
+function walk(to, cb) {
+  walking = true; sn.classList.add("walk"); $("#status").textContent = "Snoopy is on the move…";
+  const a = at, t0 = performance.now(), D = 1000;
+  (function f(n) {
+    const k = Math.min(1, (n - t0) / D), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    place(sn, pt(a + (to - a) * e));
+    if (k < 1) requestAnimationFrame(f); else { at = to; walking = false; sn.classList.remove("walk"); if (cb) cb(); }
+  })(t0);
+}
+
+function statusText() {
+  $("#status").textContent = !st.started ? "Tap Snoopy’s house to begin." : st.cleared < N ? S[st.cleared].found : CONFIG.finalFound;
+}
+function refresh() {
+  nodes.forEach((b, i) => {
+    b.className = "node " + (i === 0 || i <= st.cleared ? "done" : i === st.cleared + 1 && st.started ? "active" : "locked");
+    b.setAttribute("aria-label", i === 0 ? "Snoopy’s house" : i === N + 1 ? "Treasure" : S[i - 1].name);
+  });
+  $("#pct").textContent = "Treasure photo: " + Math.round(100 * st.cleared / N) + "% clear";
+  $("#fill").style.width = 100 * st.cleared / N + "%";
+  $("#peek").style.setProperty("--b", (30 * (N - st.cleared) / N + 4) + "px");
+  const ol = $("#clues"); ol.textContent = "";
+  S.forEach((c, i) => ol.appendChild(el("li", "", i < st.cleared ? c.clue.replace(/^Clue \d+: /, "") : "???")));
+}
+const pk = $("#peek"), im = new Image(); im.alt = ""; im.onload = () => { pk.textContent = ""; pk.appendChild(im); }; im.src = CONFIG.treasure.image;
+
+/* ---- modal ---- */
+let timers = [], afterClose = null;
+const later = (f, ms) => { timers.push(setTimeout(f, ms)); };
+const clearTimers = () => { timers.forEach(t => { clearTimeout(t); clearInterval(t); }); timers = []; };
+function openModal(title, build, closable = true) {
+  clearTimers(); afterClose = null;
+  const b = $("#box"); b.textContent = "";
+  if (closable) { const x = el("button", "x", "×"); x.type = "button"; x.setAttribute("aria-label", "Close"); x.onclick = closeModal; b.appendChild(x); }
+  b.appendChild(el("h2", "", title)); build(b); $("#modal").classList.add("open");
+}
+function closeModal() {
+  clearTimers(); $("#modal").classList.remove("open");
+  const f = afterClose; afterClose = null; if (f) f();
+}
+const say = (b, t) => { const d = el("div", "bubble"); d.appendChild(el("p", "", t)); b.appendChild(d); };
+
+/* ---- challenges ---- */
+function riddle(b, c, done) {
+  say(b, c.text);
+  const f = el("form"), inp = el("input"), ok = el("button", "", "Check"); ok.type = "submit";
+  inp.placeholder = "Your answer"; inp.autocomplete = "off"; inp.autocapitalize = "off"; inp.setAttribute("aria-label", "Your answer");
+  f.append(inp, ok); b.appendChild(f);
+  const fb = el("div", "fb"); fb.setAttribute("aria-live", "polite"); b.appendChild(fb);
+  const hb = el("button", "link", "Need a hint?"), hx = el("div", "hint", "Hint: " + c.hint); hb.type = "button"; hx.hidden = true;
+  hb.onclick = () => { hx.hidden = !hx.hidden; }; b.append(hb, hx);
+  f.onsubmit = e => {
+    e.preventDefault(); const v = norm(inp.value); if (!v) return;
+    if (c.answers.some(a => norm(a) === v)) done(); else { fb.textContent = CONFIG.wrong[Math.random() * CONFIG.wrong.length | 0]; inp.select(); }
+  };
+}
+function hangman(b, c, done) {
+  say(b, c.text);
+  const word = c.word.toUpperCase(), max = c.lives || 6;
+  let guessed = new Set(), lives = max, over = false;
+  const wd = el("div", "hw"), lv = el("div", "fb"), fb = el("div", "fb"), kb = el("div", "kb");
+  const show = () => {
+    wd.textContent = [...word].map(ch => guessed.has(ch) ? ch : "_").join(" ");
+    lv.textContent = ""; for (let k = 0; k < max; k++) { const i = new Image(); i.alt = ""; i.src = CONFIG.life; i.className = "life" + (k >= lives ? " off" : ""); lv.appendChild(i); }
+  };
+  const keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(L => {
+    const k = el("button", "key", L); k.type = "button";
+    k.onclick = () => {
+      if (over || guessed.has(L)) return; guessed.add(L); k.disabled = true;
+      if (!word.includes(L)) lives--;
+      show();
+      if ([...word].every(ch => guessed.has(ch))) { over = true; fb.textContent = "You got it!"; later(done, 900); }
+      else if (lives <= 0) {
+        over = true; fb.textContent = "Out of lives! It was " + word + ". Try again…";
+        later(() => { guessed = new Set(); lives = max; over = false; fb.textContent = ""; keys.forEach(x => { x.disabled = false; }); show(); }, 2200);
+      }
+    };
+    kb.appendChild(k); return k;
+  });
+  b.append(wd, lv, kb, fb); show();
+}
+function wordle(b, c, done) {
+  say(b, c.text);
+  const w = c.word.toUpperCase(), len = w.length, max = c.tries || 6;
+  let rows = 0, over = false;
+  const g = el("div", "wd"); g.style.gridTemplateColumns = "repeat(" + len + ",46px)";
+  const cells = Array.from({ length: max * len }, () => { const x = el("div", "wc"); g.appendChild(x); return x; });
+  const f = el("form"), inp = el("input"), ok = el("button", "", "Guess"), fb = el("div", "fb"); ok.type = "submit";
+  inp.maxLength = len; inp.placeholder = len + " letters"; inp.autocomplete = "off"; inp.autocapitalize = "off"; inp.setAttribute("aria-label", "Your guess");
+  const score = gs => {
+    const r = Array(len).fill("n"), pool = {};
+    [...w].forEach((ch, i) => { if (gs[i] === ch) r[i] = "g"; else pool[ch] = (pool[ch] || 0) + 1; });
+    [...gs].forEach((ch, i) => { if (r[i] !== "g" && pool[ch] > 0) { r[i] = "y"; pool[ch]--; } });
+    return r;
+  };
+  f.onsubmit = e => {
+    e.preventDefault(); if (over) return;
+    const gs = inp.value.toUpperCase().replace(/[^A-Z]/g, "");
+    if (gs.length !== len) { fb.textContent = "Type a " + len + "-letter word."; return; }
+    const r = score(gs);
+    [...gs].forEach((ch, i) => { const x = cells[rows * len + i]; x.textContent = ch; x.className = "wc " + r[i]; });
+    rows++; inp.value = ""; fb.textContent = "";
+    if (gs === w) { over = true; fb.textContent = "Got it!"; later(done, 900); }
+    else if (rows >= max) {
+      over = true; fb.textContent = "Out of tries! It was " + w + ". Try again…";
+      later(() => { rows = 0; cells.forEach(x => { x.textContent = ""; x.className = "wc"; }); over = false; fb.textContent = ""; }, 2200);
+    }
+  };
+  f.append(inp, ok); b.append(g, f, fb);
+  if (c.hint) b.appendChild(el("p", "", c.hint));
+}
+function slide(b, c, done) {
+  say(b, c.text);
+  const n = c.size || 4, T = n * n;
+  let tiles = Array.from({ length: T }, (_, i) => (i + 1) % T), over = false, moves = 0;   // 0 = blank
+  const board = el("div", "pz"), info = el("div", "fb"), ref = el("div", "ref");
+  board.style.gridTemplateColumns = "repeat(" + n + ",1fr)"; ref.hidden = true; ref.style.backgroundImage = "url(" + c.image + ")";
+  const solved = () => tiles.every((v, i) => v === (i + 1) % T);
+  const near = i => { const r = Math.floor(i / n), k = i % n, o = []; if (r > 0) o.push(i - n); if (r < n - 1) o.push(i + n); if (k > 0) o.push(i - 1); if (k < n - 1) o.push(i + 1); return o; };
+  const shuffle = () => {
+    let prev = -1;
+    for (let s = 0; s < T * 25; s++) {
+      const z = tiles.indexOf(0), opts = near(z).filter(x => x !== prev), m = opts[Math.random() * opts.length | 0];
+      tiles[z] = tiles[m]; tiles[m] = 0; prev = z;
+    }
+  };
+  do shuffle(); while (solved());
+  const draw = () => {
+    board.textContent = "";
+    tiles.forEach((v, i) => {
+      const t = el("button", "pt"); t.type = "button";
+      const show = v || over;
+      if (!show) { t.classList.add("blank"); t.disabled = true; t.setAttribute("aria-label", "Empty space"); }
+      else {
+        const k = (show && !v ? T : v) - 1;
+        t.style.backgroundImage = "url(" + c.image + ")"; t.style.backgroundSize = n * 100 + "% " + n * 100 + "%";
+        t.style.backgroundPosition = (k % n) / (n - 1) * 100 + "% " + Math.floor(k / n) / (n - 1) * 100 + "%";
+        t.setAttribute("aria-label", "Tile " + (k + 1));
+        if (!over) { const sp = el("span", "", String(k + 1)); sp.setAttribute("aria-hidden", "true"); t.appendChild(sp); }
+      }
+      t.onclick = () => {
+        if (over) return; const z = tiles.indexOf(0); if (!near(z).includes(i)) return;
+        tiles[z] = tiles[i]; tiles[i] = 0; moves++; check();
+      };
+      board.appendChild(t);
+    });
+  };
+  const check = () => {
+    if (solved()) { over = true; info.textContent = "Puzzle complete in " + moves + " moves!"; later(done, 1500); }
+    else info.textContent = moves + " moves";
+    draw();
+  };
+  const peek = el("button", "link", "Peek at the picture"); peek.type = "button"; peek.onclick = () => { ref.hidden = !ref.hidden; };
+  const skip = el("button", "alt", "Stuck? Let Snoopy finish it"); skip.type = "button"; skip.hidden = true;
+  skip.onclick = () => { tiles = Array.from({ length: T }, (_, i) => (i + 1) % T); skip.hidden = true; moves = 0; check(); };
+  later(() => { if (!over) skip.hidden = false; }, (c.skipAfter || 240) * 1000);
+  b.append(board, info, peek, ref, skip); check(); info.textContent = "Tap a tile next to the empty space.";
+}
+function memory(b, c, done) {
+  say(b, c.text);
+  const g = el("div", "mem"), fb = el("div", "fb");
+  const deck = [...c.cards, ...c.cards].sort(() => Math.random() - .5);
+  let open = [], found = 0, lock = false;
+  const face = (x, src) => { x.textContent = ""; if (src) { const i = new Image(); i.alt = ""; i.className = "cf"; i.src = src; x.appendChild(i); } else x.textContent = "?"; };
+  const cells = deck.map((e, i) => {
+    const x = el("button", "cell", "?"); x.type = "button";
+    x.onclick = () => {
+      if (lock || x.disabled || open.includes(i)) return;
+      face(x, e); open.push(i); if (open.length < 2) return;
+      lock = true; const [a, d] = open; open = [];
+      if (deck[a] === deck[d]) {
+        [a, d].forEach(k => { cells[k].disabled = true; cells[k].classList.add("ok"); }); lock = false;
+        if (++found === c.cards.length) { fb.textContent = "All matched!"; later(done, 800); }
+      } else later(() => { face(cells[a]); face(cells[d]); lock = false; }, 700);
+    };
+    g.appendChild(x); return x;
+  });
+  b.append(g, fb);
+}
+function task(b, c, done) { say(b, c.text); const x = el("button", "", c.button || "Done!"); x.type = "button"; x.onclick = done; b.appendChild(x); }
+const GAMES = { riddle, hangman, wordle, slide, memory, task };
+
+/* ---- flow ---- */
+function win(i) {
+  clearTimers(); st.cleared = i; save(); refresh();
+  const b = $("#box"); b.textContent = "";
+  const x = el("button", "x", "×"); x.type = "button"; x.onclick = closeModal; b.appendChild(x);
+  b.appendChild(el("h2", "pop", "Clue unlocked!")); say(b, S[i - 1].clue);
+  const go = el("button", "alt", i === N ? "Follow Snoopy to the X" : "Follow Snoopy"); go.type = "button"; go.onclick = closeModal; b.appendChild(go);
+  afterClose = () => walk(i + 1, statusText); confetti(20);
+}
+function tapNode(i) {
+  if (walking) return;
+  if (i === 0) { if (!st.started) intro(); return; }
+  if (!st.started) return;
+  if (i <= st.cleared) { openModal(S[i - 1].name, b => { say(b, S[i - 1].clue); }); return; }
+  if (i !== st.cleared + 1) { $("#status").textContent = "Finish the earlier stops first!"; later2(); return; }
+  if (i === N + 1) return treasure();
+  const c = S[i - 1]; openModal(c.name, b => GAMES[c.type](b, c, () => win(i)));
+}
+let t2; function later2() { clearTimeout(t2); t2 = setTimeout(statusText, 1800); }
+function treasure() {
+  openModal(CONFIG.treasure.title, b => {
+    const p = new Image(); p.alt = "Your treasure"; p.className = "prize";
+    p.onerror = () => p.replaceWith(el("p", "", "Add your picture at " + CONFIG.treasure.image));
+    p.src = CONFIG.treasure.image; b.appendChild(p); b.appendChild(el("p", "", CONFIG.treasure.message));
+    const a = el("button", "link", "Play the hunt again"); a.type = "button";
+    a.onclick = () => { st.cleared = 0; save(); refresh(); at = 0; place(sn, pt(0)); afterClose = () => walk(1, statusText); closeModal(); };
+    b.appendChild(a); confetti(60);
+  });
+}
+function intro() {
+  openModal(CONFIG.title, b => {
+    b.appendChild(sprite(CONFIG.sprites.hero, "sp hero")); say(b, CONFIG.intro);
+    const s = el("button", "", "Start the hunt"); s.type = "button";
+    s.onclick = () => { st.started = true; save(); refresh(); afterClose = () => walk(1, statusText); closeModal(); };
+    b.appendChild(s);
+  }, false);
+}
+function confetti(n) {
+  for (let i = 0; i < n; i++) {
+    const s = el("img", "conf"); s.src = CONFIG.confetti[i % CONFIG.confetti.length]; s.alt = "";
+    s.style.left = Math.random() * 95 + "vw"; s.style.animationDuration = 2 + Math.random() * 2.5 + "s"; s.style.animationDelay = Math.random() * .6 + "s";
+    document.body.appendChild(s); setTimeout(() => s.remove(), 6000);
+  }
+}
+
+$("#title").textContent = CONFIG.title;
+at = st.started ? Math.min(st.cleared + 1, N + 1) : 0; place(sn, pt(at));
+refresh(); statusText(); if (!st.started) intro();
+</script>
+</body>
+</html>
